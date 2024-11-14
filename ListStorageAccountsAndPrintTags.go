@@ -45,13 +45,25 @@ func main() {
 		if err != nil {
 			fmt.Errorf("failed to get resources: %v", err)
 		}
+
 		for _, rg := range page.Value {
-			fmt.Printf("\r\n ResourceID: %s, \r\nResource group: %s, \r\nLocation %s\r\n", *rg.ID, *rg.Name, *rg.Location)
+			// fmt.Printf("\r\n ResourceID: %s, \r\nResource group: %s, \r\nLocation %s\r\n", *rg.ID, *rg.Name, *rg.Location)
 			if *rg.Type == "Microsoft.Storage/storageAccounts" {
 				resourceID := *rg.ID
 				resources[resourceID]++
-				// resources[resourceID] = *armresources.Resource.Name
 				fmt.Printf("\r\nStorageAccount. ID: %s, ResourceGroup: %s\r\n", *rg.ID, *rg.Name)
+
+				tags, err := armresources.NewTagsClient(subscriptionID, cred, nil)
+				if err != nil {
+					fmt.Errorf("Error creating tags client: %s", err)
+				}
+				resourceTags, err := tags.GetAtScope(context.TODO(), resourceID, nil)
+				if err != nil {
+					fmt.Errorf("Error getting tags: %s", err)
+				}
+				for key, value := range resourceTags.Properties.Tags {
+					fmt.Println("[Tags] Key:", key, "Value:", *value)
+				}
 			}
 		}
 	}
